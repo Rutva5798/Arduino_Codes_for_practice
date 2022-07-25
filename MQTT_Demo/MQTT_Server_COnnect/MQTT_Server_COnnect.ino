@@ -13,7 +13,7 @@ WiFiClient wifiClient;
 PubSubClient mqttClient(wifiClient); 
 //define the cloud MQTT broker address and the port, hivemq
 char *mqttServer = "broker.hivemq.com";
-int mqttPort = 8000;
+int mqttPort = 1883;
 int notConnectedCounter=0;
 //WiFi connect
 void connectToWiFi() {
@@ -47,6 +47,9 @@ void connectToWiFi() {
 //MQTT setup
 void setupMQTT() {
   mqttClient.setServer(mqttServer, mqttPort);
+  Serial.println((mqttServer));
+  Serial.println((mqttPort));
+
   // set the callback function
   mqttClient.setCallback(callback);
 }
@@ -58,25 +61,31 @@ void reconnect() {
       Serial.println("Reconnecting to MQTT Broker..");
 
       //try to connect random clientId, changes everytime we connect
-      String clientId = "clientId-D3QhkX8pia";
+      char* clientId = "clientId-nEfFe44LGQ";
       //clientId += String(random(0xffff), HEX);
       
-      if (mqttClient.connect(clientId.c_str())) {
+      if (mqttClient.connect("RS")) {
         Serial.println("Connected.");
-        
+        // Once connected, publish an announcement...
+        mqttClient.publish("esp-25072022","Beggin");
+        // ... and resubscribe  
         // subscribe to topic 
         mqttClient.subscribe("/dcv7/joystick");
+        delay(5000);
       }
+      delay(1000);
       
   }
 }
 
 void callback(char* topic, byte* payload, unsigned int length) {
-  Serial.print("Callback - ");
-  Serial.print("Message:");
-  for (int i = 0; i < length; i++) {
+  Serial.print("Message arrived [");
+  Serial.print(topic);
+  Serial.print("] ");
+  for (int i=0;i<length;i++) {
     Serial.print((char)payload[i]);
   }
+  Serial.println();
 }
 
 void setup() {
@@ -84,11 +93,7 @@ void setup() {
 
   Serial.begin(115200);
   connectToWiFi();
-// //Sensors' I2C addr 0x76
-//  if (!bme.begin(0x76)) 
-//  {
-//    Serial.println("Problem connecting to BME280");
-//  }
+
   setupMQTT();
 
 
@@ -96,12 +101,13 @@ void setup() {
 
 void loop() {
   // put your main code here, to run repeatedly:
-  char data[10];
+  //char data[10];
   
   if (!mqttClient.connected())
     reconnect();
   mqttClient.loop();
 
-  Serial.println(data);
-  mqttClient.publish("/dcv7/joystick", data);
+  //Serial.println(data);
+  mqttClient.publish("esp-25072022","Qwerty");
+  //mqttClient.publish("/dcv7/joystick", data);
 }
